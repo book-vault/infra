@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create S3 bucket, DynamoDB table, IAM roles
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Name of the Environment
+    Default: main
+  Project:
+    Type: String
+    Description: Name of the Project
+    Default: bookvault
+  Service:
+    Type: String
+    Description: Name of the Service
+    Default: terraform
+  GitHubUserName:
+    Type: String
+    Description: GitHub Username
+  GitHubRepoName:
+    Type: String
+    Description: GitHub Repository Name
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Environment}-${Project}-${Service}-s3"
+      Tags:
+        - Key: resource
+          Value: manish
+        - Key: iac
+          Value: cft
+
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${Environment}-${Project}-${Service}-dynamodbTable"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      Tags:
+        - Key: resource
+          Value: manish
+
+  OIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties: 
+      Url: "https://token.actions.githubusercontent.com"
+      ClientIdList:
+        - "sts.amazonaws.com"
+      ThumbprintList:
+        - "74f3a68f16524f15424927704c9506f55a9316bd"
+      Tags:
+        - Key: environment
+          Value: global
+        - Key: Project
+          Value: !Ref Project
+        - Key: service
+          Value: !Ref Service
+        - Key: resource
+          Value: manish
+
+  GitHubAssumeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Environment}-${Project}-${Service}-github-assume_role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+              StringLike:
+                "token.actions.githubusercontent.com:sub": !Sub "repo:${GitHubUserName}/${GitHubRepoName}:*"
+      Tags:
+        - Key: resource
+          Value: manish
+
+  GitHubAssumeRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${Environment}-${Project}-${Service}-github-assume_role_policy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "*"
+            Resource: "*"
+      Roles:
+        - !Ref GitHubAssumeRole
+
+Outputs:
+  S3BucketName:
+    Description: Name of the created S3 bucket
+    Value: !Ref S3Bucket
+
+  DynamoDBTableName:
+    Description: Name of the created DynamoDB table
+    Value: !Ref DynamoDBTable
+
+  GitHubAssumeRoleArn:
+    Description: ARN of the GitHub assume role
+    Value: !GetAtt GitHubAssumeRole.Arn
+
+

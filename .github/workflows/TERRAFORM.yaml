@@ -1,0 +1,87 @@
+name: Deploy develop
+
+on:
+  workflow_dispatch:
+
+permissions: write-all   
+
+env:
+  TERRAFORM_VERSION: '1.9.7'
+  ACTION: apply
+  ENVIRONMENT: main
+  WORKSPACE_NAME: main
+  PROJECT: bookvault
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }} 
+  TF_VAR_AWS_REGION: ${{ vars.TF_VAR_AWS_REGION }}
+  TF_VAR_K8S_DOMAIN_NAME: ${{ vars.TF_VAR_K8S_DOMAIN_NAME }}
+  TF_VAR_KEYPAIR: ${{ vars.TF_VAR_KEYPAIR }}
+
+jobs:
+  deploy_infra_job:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+  
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/global-${{ env.PROJECT }}-github-assume_role
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check --recursive ./
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Determine workspace name
+        id: workspace_name
+        run: |
+          echo "workspaceName=${WORKSPACE_NAME,,}" >> $GITHUB_OUTPUT 
+
+      - name: Create a new terraform workspace
+        id: new_workspace
+        run: terraform workspace select ${{ steps.workspace_name.outputs.workspaceName }} || terraform workspace new ${{ steps.workspace_name.outputs.workspaceName }}
+
+      - name: Terraform select workspace
+        id: select_workspace
+        run: terraform workspace select ${{ steps.workspace_name.outputs.workspaceName }}
+
+      - name: Terraform Init
+        id: init_workspace
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=plan.tfplan
+
+      - name: Terraform Apply
+        if: ${{ env.ACTION == 'apply' }}
+        id: apply
+        run: terraform apply -auto-approve plan.tfplan
+
+      - name: Terraform Destroy
+        if: ${{ env.ACTION == 'destroy' }}
+        id: destroy
+        run: |
+          terraform destroy -auto-approve
+          terraform workspace select $(echo ${{ env.ENVIRONMENT }} | tr [:upper:] [:lower:])
+          terraform workspace delete ${{ steps.workspace_name.outputs.workspaceName }}

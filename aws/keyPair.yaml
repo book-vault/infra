@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create key pair.
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Name of the Environment
+    Default: main
+  Project:
+    Type: String
+    Description: Name of the Project
+    Default: bookvault
+  Service:
+    Type: String
+    Description: Name of the Service
+    Default: terraform
+  PublicKey:
+    Type: String
+    Description: public ssh key
+Resources:
+  EC2KeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Sub "${Environment}-${Project}-${Service}-ec2-keyPair"
+      PublicKeyMaterial: !Ref PublicKey
+
+Outputs:
+  EC2KeyPairName:
+    Description: Name of the EC2 Key Pair created
+    Value: !Ref EC2KeyPair
