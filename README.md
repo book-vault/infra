@@ -33,14 +33,15 @@ graph TB
 infra/
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml
+│       └── TERRAFORM.yaml
 ├── aws/
-│   ├── key-pair.yaml        # CloudFormation template for SSH key pair
-│   └── state-backend.yaml   # CloudFormation template for backend resources
+│   ├── keyPair.yaml         # CloudFormation template for SSH key pair
+│   └── terraform.yaml       # CloudFormation template for backend resources
 └── terraform/
     ├── main.tf              # Main Terraform configuration
-    ├── variables.tf
-    └── outputs.tf
+    ├── vpc.tf               # vpc and networking resources
+    ├── ec2.tf               # ec2 with k3s installed
+    └── variables.tf         # Main Terraform configuration
 ```
 
 ## 🔄 GitOps Workflow
