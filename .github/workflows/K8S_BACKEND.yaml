@@ -28,4 +28,4 @@ jobs:
         env:
           DOCKER_CONFIG_JSON: ${{ secrets.DOCKER_CONFIG_JSON }}
         run: |
-          kubectl apply -f ./kubernetes/backend/*
+          kubectl apply -f ./kubernetes/backend
