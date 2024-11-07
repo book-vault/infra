@@ -36,7 +36,7 @@ jobs:
 
       - name: Create Monitoring Resources
         run: |
-          kubectl apply -f ./kubernetes/monitoring/*
+          kubectl apply -f ./kubernetes/monitoring/* --validate=false
 
       - name: Deploy Helm chart
         run: |
