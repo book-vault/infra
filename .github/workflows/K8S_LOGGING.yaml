@@ -1,0 +1,47 @@
+name: Deploy Loki Helm
+on:
+  workflow_dispatch:
+
+env:
+  KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+  NAMESPACE: logging-ns
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Create kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBE_CONFIG" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Add Helm repos
+        run: |
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Create Logging Resources
+        run: |
+          kubectl apply -f ./kubernetes/logging/*
+
+      - name: Deploy Helm chart
+        run: |
+          helm upgrade --install loki grafana/loki-stack \
+            --namespace $NAMESPACE \
+            --set loki.image.tag=2.9.3 \
+            --wait \
+            --timeout 10m

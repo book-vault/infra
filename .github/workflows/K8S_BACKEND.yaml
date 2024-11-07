@@ -1,0 +1,31 @@
+name: Create Secrets
+on:
+  workflow_dispatch:
+
+env:
+  KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+  NAMESPACE: backend-ns
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Create kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBE_CONFIG" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Create Resources for Secret
+        env:
+          DOCKER_CONFIG_JSON: ${{ secrets.DOCKER_CONFIG_JSON }}
+        run: |
+          kubectl apply -f ./kubernetes/backend/*
