@@ -1,4 +1,4 @@
-name: Deploy Loki Helm
+name: Deploy Grafana Helm
 on:
   workflow_dispatch:
 
