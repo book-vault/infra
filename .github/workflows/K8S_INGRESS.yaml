@@ -1,4 +1,4 @@
-name: Create Secrets
+name: Deploy Backend
 on:
   workflow_dispatch:
 
@@ -27,8 +27,5 @@ jobs:
       - name: Create Resources for Secret
         env:
           DOCKER_CONFIG_JSON: ${{ secrets.DOCKER_CONFIG_JSON }}
-          BASE64_TLS_CERT: ${{ secrets.BASE64_TLS_CERT }}
-          BASE64_TLS_KEY: ${{ secrets.BASE64_TLS_KEY }}
         run: |
-          envsubst < ./kubernetes/secret/ghcr-secret.yaml | kubectl apply -f -
-          envsubst < ./kubernetes/secret/bookvault-tls.yaml | kubectl apply -f -
+          kubectl apply -f ./kubernetes/ingress
