@@ -34,10 +34,6 @@ jobs:
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
 
-      - name: Create Logging Resources
-        run: |
-          kubectl apply -f ./kubernetes/logging/*
-
       - name: Deploy Helm chart
         run: |
           helm upgrade --install loki grafana/loki-stack \
