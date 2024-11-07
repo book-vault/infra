@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: bookvault-ns
+data:
+  fluent.conf: |
+    <source>
+      @type tail
+      path /app/logs/*.log
+      pos_file /fluentd/log/app.log.pos
+      tag app.logs
+      <parse>
+        @type none
+      </parse>
+    </source>
+
+    <match app.logs>
+      @type loki
+      url "http://loki.logging-ns.svc.cluster.local:3100"
+      extra_labels {"job": "backend"}
+      flush_interval 10s
+      flush_at_shutdown true
+      buffer_chunk_limit 1m
+      <buffer>
+        @type memory
+        flush_interval 5s
+        chunk_limit_size 1m
+        total_limit_size 10m
+        retry_max_times 3
+      </buffer>
+    </match>
