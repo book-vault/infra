@@ -33,15 +33,42 @@ graph TB
 infra/
 ├── .github/
 │   └── workflows/
-│       └── TERRAFORM.yaml
+│       ├── TERRAFORM.yaml                # Workflow for managing Terraform infrastructure 
+│       ├── K8S_BACKEND.yaml              # Workflow for deploying Kubernetes backend services
+│       ├── K8S_INGRESS.yaml              # Workflow for setting up Kubernetes ingress resources
+│       ├── K8S_LOGGING.yaml              # Workflow for deploying logging tools (e.g., Loki) on Kubernetes
+│       ├── K8S_MONITORING.yaml           # Workflow for deploying monitoring tools (e.g., Grafana) on Kubernetes
+│       ├── K8S_NAMESPACES.yaml           # Workflow for creating namespaces in Kubernetes
+│       └── K8S_SECRET.yaml               # Workflow for creating Kubernetes secrets
+│
 ├── aws/
-│   ├── keyPair.yaml         # CloudFormation template for SSH key pair
-│   └── terraform.yaml       # CloudFormation template for backend resources
+│   ├── keyPair.yaml                      # CloudFormation template for SSH key pair
+│   └── terraform.yaml                    # CloudFormation template for backend resources
+│
+├── kubernetes/
+|    ├── backend/                         # Contains backend-related Kubernetes configurations.
+|    │   ├── deployment.yaml              # Deployment configuration for the backend app.                      
+|    │   ├── fluentd.yaml                 # ConfigMap for Fluentd logging.
+|    │   └── service.yaml                 # Service configuration for backend.
+|    │                                     
+|    ├── ingress/                         # Contains Ingress configurations for routing.
+|    │   ├── ingress_backend.yaml         # Ingress for backend service.
+|    │   └── ingress_grafana.yaml         # Ingress for Grafana monitoring service.
+|    │                                       
+|    ├── namespaces/                      # Contains Namespace configurations for organizing resources.
+|    │   ├── namespace_backend.yaml       # Namespace for backend.
+|    │   ├── namespace_logging.yaml       # Namespace for logging.
+|    │   └── namespace_monitoring.yaml    # Namespace for monitoring.
+|    │                                      
+|    └── secret/                          # Contains secret configurations.
+|        ├── bookvault-tls.yaml          # TLS secret for secure backend connections.
+|        └── ghcr-secret.yaml            # Docker registry secret for image pulls from GHCR.                                  
+|
 └── terraform/
-    ├── main.tf              # Main Terraform configuration
-    ├── vpc.tf               # vpc and networking resources
-    ├── ec2.tf               # ec2 with k3s installed
-    └── variables.tf         # Main Terraform configuration
+    ├── main.tf                           # Main Terraform configuration
+    ├── vpc.tf                            # vpc and networking resources
+    ├── ec2.tf                            # ec2 with k3s installed
+    └── variables.tf                      # Main Terraform configuration
 ```
 
 ## 🔄 GitOps Workflow
